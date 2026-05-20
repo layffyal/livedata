@@ -1,0 +1,9 @@
+{
+  "teamId": null,
+  "minRefreshSeconds": 30,
+  "goals": {
+    "TIKTOK": 10000,
+    "INSTAGRAM": 5000,
+    "YOUTUBE": 1000
+  }
+}

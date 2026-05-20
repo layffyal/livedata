@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phantom U — Live Metrics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+  /* English Towne — the Phantom wordmark face. Uses the font if it's
+     installed on the machine or dropped into phantom-live/fonts/;
+     otherwise falls back to a blackletter web font. */
+  @font-face {
+    font-family: 'English Towne';
+    src: local('English Towne'), local('EnglishTowne'),
+         url('/fonts/EnglishTowne.woff2') format('woff2'),
+         url('/fonts/EnglishTowne.woff') format('woff'),
+         url('/fonts/EnglishTowne.ttf') format('truetype'),
+         url('/fonts/EnglishTowne.otf') format('opentype');
+    font-display: swap;
+  }
+  :root {
+    --bg: #0a0a0b;
+    --panel: #121214;
+    --ink: #ece7dc;
+    --muted: #817d74;
+    --faint: #4a4843;
+    --line: rgba(236,231,220,.11);
+    --fill: #ece7dc;
+    --bad: #c06a6a;
+    --display: 'English Towne', 'UnifrakturMaguntia', 'Times New Roman', serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--body); color: var(--ink);
+    background:
+      radial-gradient(120% 80% at 50% 0%, #141416 0%, var(--bg) 55%, #000 100%);
+    background-attachment: fixed;
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  /* cinematic film grain */
+  .grain {
+    position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: .05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .wrap { max-width: 680px; margin: 0 auto; padding: 60px 24px 64px; position: relative; z-index: 1; }
+
+  /* header / wordmark */
+  header { text-align: center; margin-bottom: 40px; }
+  .mark {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(56px, 14vw, 96px); line-height: .96;
+    letter-spacing: .01em; color: var(--ink);
+  }
+  .rule {
+    width: 54px; height: 1px; background: var(--ink); opacity: .55;
+    margin: 20px auto 14px;
+  }
+  .tagline {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .42em;
+    color: var(--muted); padding-left: .42em;
+  }
+
+  /* cards */
+  .card {
+    background: linear-gradient(180deg, var(--panel), #0e0e10);
+    border: 1px solid var(--line); border-radius: 3px;
+    padding: 24px 26px; margin-bottom: 16px;
+  }
+  .label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .26em;
+    color: var(--muted); margin-bottom: 20px; padding-left: .26em;
+  }
+
+  /* total reach */
+  .statgrid { display: flex; gap: 1px; background: var(--line); }
+  .stat { flex: 1; min-width: 96px; background: var(--panel); padding: 6px 14px; }
+  .statnum {
+    font-size: clamp(30px, 7vw, 42px); font-weight: 800; letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .statlbl {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .2em;
+    color: var(--muted); margin-top: 6px;
+  }
+
+  /* per platform */
+  .plat { padding: 19px 0; border-bottom: 1px solid var(--line); }
+  .plat:first-of-type { padding-top: 2px; }
+  .plat:last-child { border-bottom: none; padding-bottom: 2px; }
+  .plathead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    flex-wrap: wrap; gap: 4px 14px;
+  }
+  .pname {
+    font-size: 12.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .19em;
+  }
+  .phandle {
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+    color: var(--muted); margin-left: 9px; font-size: 12px;
+  }
+  .pnums { display: flex; gap: 18px; font-size: 12px; color: var(--muted); }
+  .pnums b {
+    color: var(--ink); font-size: 16px; font-weight: 800;
+    font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+  }
+  .goalrow {
+    display: flex; justify-content: space-between; font-size: 11px;
+    color: var(--muted); margin: 13px 0 6px; text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+  .bar { height: 5px; background: rgba(236,231,220,.07); overflow: hidden; }
+  .barfill { height: 100%; background: var(--fill); min-width: 2px; opacity: .85; }
+  .barfill.met { opacity: 1; }
+  .tag {
+    display: inline-block; font-size: 9px; text-transform: uppercase;
+    letter-spacing: .16em; color: var(--faint); margin-top: 11px;
+  }
+  .tag::before { content: "— "; }
+  .tag.forced { color: var(--muted); }
+  .tag.bad { color: var(--bad); }
+
+  /* actions */
+  .actions {
+    display: flex; align-items: center; gap: 16px;
+    justify-content: center; margin-top: 26px;
+  }
+  button.refresh {
+    font-family: var(--body); font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .22em; padding: 12px 26px 12px 28px;
+    background: transparent; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 2px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  button.refresh:hover { border-color: rgba(236,231,220,.4); background: rgba(236,231,220,.04); }
+  button.refresh:disabled { opacity: .4; cursor: default; }
+  .updated { font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--faint); }
+
+  .msg { color: var(--muted); font-size: 13px; padding: 6px 0; }
+  .msg.err { color: var(--bad); }
+  footer {
+    margin-top: 30px; text-align: center;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .2em;
+    color: var(--faint);
+  }
+  .spin {
+    display: inline-block; width: 11px; height: 11px; vertical-align: -1px;
+    border: 1.5px solid var(--line); border-top-color: var(--ink);
+    border-radius: 50%; animation: sp .7s linear infinite; margin-right: 8px;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="wrap">
+  <header>
+    <div class="mark">Phantom U</div>
+    <div class="rule"></div>
+    <div class="tagline">Live Social Metrics</div>
+  </header>
+  <main id="main">
+    <div class="card"><div class="msg"><span class="spin"></span>Pulling live metrics…</div></div>
+  </main>
+  <div class="actions">
+    <button class="refresh" id="refresh">Refresh</button>
+    <span class="updated" id="sub"></span>
+  </div>
+  <footer>Pulled live from bundle.social on every refresh</footer>
+</div>
+
+<script>
+"use strict";
+
+function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+function tagClass(status) {
+  if (/^forced/.test(status)) return "forced";
+  if (/^error/.test(status)) return "bad";
+  return "";
+}
+
+function shortDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function render(data) {
+  const p = data.platforms || [];
+  const totF = p.reduce((s, x) => s + (x.followers || 0), 0);
+  const totV = p.reduce((s, x) => s + (x.views || 0), 0);
+
+  let h = `<section class="card">
+    <div class="label">Total Reach</div>
+    <div class="statgrid">
+      <div class="stat"><div class="statnum">${fmt(totF)}</div><div class="statlbl">Audience</div></div>
+      <div class="stat"><div class="statnum">${fmt(totV)}</div><div class="statlbl">Views</div></div>
+      <div class="stat"><div class="statnum">${p.length}</div><div class="statlbl">Platforms</div></div>
+    </div>
+  </section>`;
+
+  h += `<section class="card"><div class="label">By Platform</div>`;
+  h += p.map(x => {
+    const unit = x.unit || "followers";
+    const pct = x.goal ? Math.round((x.followers || 0) / x.goal * 100) : null;
+    const asOf = x.asOf ? " · data from " + shortDate(x.asOf) : "";
+    return `<div class="plat">
+      <div class="plathead">
+        <div class="pname">${x.name}${x.handle ? `<span class="phandle">${x.handle}</span>` : ""}</div>
+        <div class="pnums">
+          <span><b>${fmt(x.followers)}</b> ${unit}</span>
+          <span><b>${fmt(x.views)}</b> views</span>
+        </div>
+      </div>${
+      pct === null ? "" :
+      `<div class="goalrow"><span>Goal ${fmt(x.goal)} ${unit}</span><span>${pct}%</span></div>
+       <div class="bar"><div class="barfill ${pct >= 100 ? "met" : ""}"
+         style="width:${Math.min(100, pct)}%"></div></div>`}
+      <div class="tag ${tagClass(x.status)}">${x.status}${asOf}</div>
+    </div>`;
+  }).join("");
+  h += `</section>`;
+
+  document.getElementById("main").innerHTML = h;
+  const when = new Date(data.generatedAt || Date.now());
+  document.getElementById("sub").textContent =
+    "Updated " + when.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) +
+    (data.throttled ? " · throttled" : "");
+}
+
+function showError(text) {
+  document.getElementById("main").innerHTML =
+    `<div class="card"><div class="msg err">Couldn't load metrics: ${text}</div>
+     <div class="msg">Check that the server has a valid BUNDLE_SOCIAL_API_KEY and that
+     your accounts are connected at bundle.social.</div></div>`;
+}
+
+async function load() {
+  const btn = document.getElementById("refresh");
+  btn.disabled = true;
+  document.getElementById("main").innerHTML =
+    `<div class="card"><div class="msg"><span class="spin"></span>Pulling live metrics…</div></div>`;
+  try {
+    const res = await fetch("/api/metrics", { cache: "no-store" });
+    const data = await res.json();
+    if (data.error) showError(data.error);
+    else render(data);
+  } catch (e) {
+    showError(String(e && e.message || e));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById("refresh").addEventListener("click", load);
+load();
+</script>
+</body>
+</html>

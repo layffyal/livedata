@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Phantom U live dashboard — keep the server running 24/7 (macOS launchd).
+
+  Before installing, replace the two placeholders below:
+    __NODE_PATH__   absolute path to node — find it with:  which node
+                    (Homebrew arm: /opt/homebrew/bin/node · installer: /usr/local/bin/node)
+    __API_KEY__     your bundle.social API key
+
+  Install:
+    cp "/Users/layth/glen/phantom-live/com.phantom.live-dashboard.plist" ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.phantom.live-dashboard.plist
+
+  The dashboard is then always at:  http://localhost:7842
+  Log:    cat "/Users/layth/glen/phantom-live/server.log"
+  Stop:   launchctl unload ~/Library/LaunchAgents/com.phantom.live-dashboard.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.phantom.live-dashboard</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__NODE_PATH__</string>
+    <string>/Users/layth/glen/phantom-live/server.js</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/layth/glen/phantom-live</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>BUNDLE_SOCIAL_API_KEY</key>
+    <string>__API_KEY__</string>
+    <key>PORT</key>
+    <string>7842</string>
+  </dict>
+
+  <!-- Start at login and restart automatically if it ever stops. -->
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/layth/glen/phantom-live/server.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/layth/glen/phantom-live/server.log</string>
+</dict>
+</plist>

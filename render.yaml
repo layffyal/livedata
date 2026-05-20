@@ -1,0 +1,22 @@
+# Render Blueprint — deploys the Phantom U live dashboard.
+#
+# In Render:  New +  ->  Blueprint  ->  pick the GitHub repo that holds
+# this file. Render reads this file and creates the service. It will then
+# prompt you for the three secret values below (they are not stored here).
+services:
+  - type: web
+    name: phantom-live-dashboard
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      # Your bundle.social API key.
+      - key: BUNDLE_SOCIAL_API_KEY
+        sync: false
+      # Login for the dashboard. DASH_PASSWORD enables the password gate.
+      - key: DASH_USER
+        sync: false
+      - key: DASH_PASSWORD
+        sync: false
