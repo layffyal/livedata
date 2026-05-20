@@ -17,11 +17,7 @@
  *   BUNDLE_SOCIAL_API_KEY=your-key  node server.js
  *   then open  http://localhost:7842
  *
- * Optional env:
- *   PORT           port to listen on (default 7842)
- *   DASH_USER      Basic-Auth username (default "phantom")
- *   DASH_PASSWORD  Basic-Auth password. When set, the whole dashboard is
- *                  password-protected. Leave unset for an open local run.
+ * Optional env: PORT (default 7842).
  *
  * REFRESH BEHAVIOUR
  *   Each page load asks bundle.social to force a fresh pull from the
@@ -40,18 +36,12 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
 const API = 'https://api.bundle.social/api/v1';
 const KEY = process.env.BUNDLE_SOCIAL_API_KEY;
 const PORT = process.env.PORT || 7842;
 const CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
 const HTML = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-
-// Basic-Auth gate. Active only when DASH_PASSWORD is set, so local runs
-// stay open while the cloud deployment is locked down.
-const AUTH_USER = process.env.DASH_USER || 'phantom';
-const AUTH_PASS = process.env.DASH_PASSWORD || '';
 
 // Platforms bundle.social can report on, in display order.
 // `unit` is how the follower count is labelled on that platform.
@@ -65,23 +55,6 @@ const num = v => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
-
-/* ---------- auth ---------- */
-function safeEqual(a, b) {
-  const ab = Buffer.from(String(a));
-  const bb = Buffer.from(String(b));
-  return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
-}
-function isAuthed(req) {
-  if (!AUTH_PASS) return true; // gate disabled when no password configured
-  const m = /^Basic (.+)$/i.exec(req.headers['authorization'] || '');
-  if (!m) return false;
-  const decoded = Buffer.from(m[1], 'base64').toString('utf8');
-  const i = decoded.indexOf(':');
-  if (i < 0) return false;
-  return safeEqual(decoded.slice(0, i), AUTH_USER) &&
-         safeEqual(decoded.slice(i + 1), AUTH_PASS);
-}
 
 /* ---------- bundle.social REST ---------- */
 async function bs(pathname, { method = 'GET', body } = {}) {
@@ -189,15 +162,6 @@ function getMetrics() {
 const server = http.createServer(async (req, res) => {
   const url = (req.url || '/').split('?')[0];
 
-  // /health stays open so the host can ping it; everything else is gated.
-  if (url !== '/health' && !isAuthed(req)) {
-    res.writeHead(401, {
-      'WWW-Authenticate': 'Basic realm="Phantom U", charset="UTF-8"',
-      'content-type': 'text/plain',
-    });
-    return res.end('Authentication required');
-  }
-
   if (url === '/' || url === '/index.html') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(HTML);
@@ -238,6 +202,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Phantom live dashboard running on http://localhost:${PORT}`);
-  console.log(`Password protection: ${AUTH_PASS ? 'ON' : 'OFF (set DASH_PASSWORD to enable)'}`);
   if (!KEY) console.warn('WARNING: BUNDLE_SOCIAL_API_KEY is not set — /api/metrics will error.');
 });
